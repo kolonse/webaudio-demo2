@@ -510,6 +510,9 @@ function Click(o) {
         case "4":
             UseWorklet();
             break;
+        case "5":
+            UseWorkletAndPeerConn();
+            break;
     }
 }
 
@@ -526,6 +529,14 @@ function UseWorklet() {
     if (audioTest) audioTest.stop();
 
     audioTest = new AudioTest(log,{noiseSuppression : false, echoCancellation:false, autoGainControl:false},false,true);
+
+    audioTest.start();
+}
+
+function UseWorkletAndPeerConn() {
+    if (audioTest) audioTest.stop();
+
+    audioTest = new AudioTest(log,{noiseSuppression : false, echoCancellation:false, autoGainControl:false},true,true);
 
     audioTest.start();
 }
