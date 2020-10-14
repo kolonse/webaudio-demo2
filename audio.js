@@ -1,31 +1,3 @@
-// var ws_log_out = new WebSocket("ws://127.0.0.1:8889"); 
-
-// function JinShanLogMessage(type, data) {
-//     this.type = type;
-//     this.data = data;
-// }
-
-// JinShanLogMessage.prototype.format = function() {
-//     var result = new Uint8Array(this.data.byteLength + 4 + 4);
-//     var len = new Uint8Array(new Uint32Array([this.data.byteLength]).buffer);
-//     var type = new Uint8Array(new Uint32Array([this.type]).buffer);
-
-//     result.set(len,0);
-//     result.set(type,4);
-//     result.set(this.data,8);
-
-//     return result;
-// }
-
-// function JinShanSendLog(data) {
-//     if (ws_log_out && ws_log_out.readyState === 1) {
-//         ws_log_out.send(data);
-//     }
-// }
-
-// function saveAudio(data) {
-//     JinShanSendLog(new JinShanLogMessage(5555, new Uint8Array(data.buffer)).format());
-// }
 class FileSave
 {
     constructor(filename, size)
@@ -41,7 +13,7 @@ class FileSave
     {
         this.buff.set(data, this.writeLen);
         this.writeLen += len ;
-        
+
         if (this.writeLen >= this.buffLenth) {
             let buff = this.buff;
             let filename = this.fileName + "." + this.seq;
@@ -91,49 +63,68 @@ class FileSaveFloat32 extends FileSave
     }
 }
 
+
+
+
+
+
+
 class wokletNode extends AudioWorkletNode {
     constructor(context) {
         super(context, 'myworklet');
-        console.log(context);
         this.port.onmessage = this.handleMessage.bind(this);
-        this.count              = 0;
-        this.sampleRate         = context.sampleRate;
-        this.fileName           = new Date().getTime();
-        this.fileSave           = new FileSaveFloat32("" + this.fileName + "_" + ".float32." + this.sampleRate + ".pcm", this.sampleRate * 10 );
+        this.count = 0;
+        this.sampleRate = context.sampleRate;
+        this.fileName = new Date().getTime();
+        this.fileSave = new FileSaveFloat32("" + this.fileName + "_" + ".float32." + this.sampleRate + ".pcm", this.sampleRate * 10 );
     }
 
     handleMessage(event) {
-        let data = event.data;
-        // this.fileSave.appendData(data, data.length);
-        this.count ++;
+        // let data = event.data;
+        // // this.fileSave.appendData(data, data.length);
+        // this.count++;
 
-        this.checkZeroData(data,(t) =>{
-            // log(new Date(), "@ " + (this.count * 10 / 1000) + " s", " happen zero data, length :", t );
-        });
+        // this.checkZeroData(data,(t) =>{
+        //     // log(new Date(), "@ " + (this.count * 10 / 1000) + " s", " happen zero data, length :", t );
+        // });
     }
 
-    checkZeroData(data,cb) {
-        let count = 0;
-        for (let i = 0;i < data.length; i ++) {
-            if (data[i] == 0) {
-                count ++ ;
-            } else {
-                if (count != 0) {
-                    cb (count);
-                }
-                count = 0;
-            }
-        }
+    // checkZeroData(data,cb) {
+        // let count = 0;
+        // for (let i = 0;i < data.length; i ++) {
+        //     if (data[i] == 0) {
+        //         count ++ ;
+        //     } else {
+        //         if (count != 0) {
+        //             cb (count);
+        //         }
+        //         count = 0;
+        //     }
+        // }
 
-        if (count !== 0) {
-            cb (count);
-        }
-    }
+        // if (count !== 0) {
+        //     cb (count);
+        // }
+    // }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class AudioTest {
     constructor(cb, constraints, usePeerConn, useWorklet) {
-        this.audioContext       = null;//new AudioContext();
+        this.audioContext       = null;
         this.audioStreamNode    = null;
         this.onTextUpdate       = cb;
         this.beginTime          = 0;
@@ -149,8 +140,7 @@ class AudioTest {
     }
 
     start() {
-        var v = this.constraints;
-        navigator.mediaDevices.getUserMedia( {audio : v } )
+        navigator.mediaDevices.getUserMedia({audio: this.constraints})
             .then(this.createAudioContext.bind(this))
             .then(this.createWorkletNode.bind(this))
             .then(this.connectWorkletNode.bind(this))
@@ -158,64 +148,63 @@ class AudioTest {
     }
 
     stop() {
-        try {
-            if (this.rtcConnection) {
-                this.rtcConnection.close();
-                this.rtcConnection = null;
-            }
-            if (this.rtcLoopbackConnection) {
-                this.rtcLoopbackConnection.close();
-                this.rtcLoopbackConnection = null;
-            }
-        } catch (e) {
-            log(JSON.stringify(e))
+      try {
+        if (this.rtcConnection) {
+          this.rtcConnection.close();
+          this.rtcConnection = null;
         }
 
-        if (this.audioContext) this.audioContext.close();
-
-        if (this.audioStreamNode) {
-            this.audioStreamNode.disconnect();
+        if (this.rtcLoopbackConnection) {
+          this.rtcLoopbackConnection.close();
+          this.rtcLoopbackConnection = null;
         }
+      } catch (e) {
+        log(JSON.stringify(e))
+      }
 
-        if (this.audioWorkletNode) {
-            this.audioWorkletNode.disconnect();
-        }
+      if (this.audioStreamNode)
+        this.audioStreamNode.disconnect();
 
-        if (this.audioDomNode){
-            this.audioDomNode.srcObject = null;
-            // this.audioDomNode.stop();
-            this.audioDomNode = null;
-        }
+      if (this.audioWorkletNode)
+        this.audioWorkletNode.disconnect();
+
+      if (this.audioContext) {
+        this.audioContext.close();
+        this.audioContext = null;
+      }
+
+      if (this.audioDomNode){
+        this.audioDomNode.srcObject = null;
+        this.audioDomNode.stop();
+        this.audioDomNode = null;
+      }
     }
 
     createAudioContext(stream) {
-        this.audioContext = new AudioContext({
-            sampleRate : this.sampleRate,
-        });
-        console.log(stream.getAudioTracks()[0].getSettings());
-        this.audioStreamNode = this.audioContext.createMediaStreamSource(stream);
-        if (this.useWorklet) {
-            return new Promise((resolve) =>{resolve();});
-        } else {
-            this.onTextUpdate(new Date(), "only playout input-audio !!!");
-            this.audioStreamNode.connect(this.audioContext.destination);
-            return new Promise((resolve,reject) =>{reject();});
-        }
+      console.log(stream.getAudioTracks()[0].getSettings());
+
+      this.audioContext = new AudioContext({sampleRate : this.sampleRate});
+      this.audioStreamNode = this.audioContext.createMediaStreamSource(stream);
+      if (this.useWorklet) {
+        return new Promise(resolve => resolve());
+      } else {
+        this.onTextUpdate(new Date(), "only playout input-audio !!!");
+        this.audioStreamNode.connect(this.audioContext.destination);
+        return new Promise((resolve, reject) => reject());
+      }
     }
 
-    createWorkletNode () {
-        let that = this;
-        return this.audioContext.audioWorklet.addModule("worklet.js")
-            .then(()=>{
-                that.audioWorkletNode = new wokletNode(that.audioContext);
-                return new Promise((resolve) =>{resolve();});
-            });
+    createWorkletNode() {
+      let that = this;
+      return this.audioContext.audioWorklet.addModule("worklet.js")
+          .then(() => {
+            that.audioWorkletNode = new wokletNode(that.audioContext);
+            return new Promise(resolve => resolve());
+          });
     }
 
     async connectWorkletNode() {
         this.audioStreamNode.connect(this.audioWorkletNode);
-        // this.audioWorkletNode.connect(this.audioContext.destination);
-        
         let dest = this.audioContext.createMediaStreamDestination();
         this.audioWorkletNode.connect(dest);
         let workaroundstream = await this.chromeAecWorkAround(dest.stream);
@@ -249,7 +238,7 @@ class AudioTest {
         }
 
         let loopbackStream = new MediaStream(); // this is the stream you will read from for actual audio output
-        
+
         const offerOptions = {
             offerVideo: false,
             offerAudio: true,
@@ -382,13 +371,21 @@ class AudioTest {
         // }
 
         offer = await rtcConnection.createOffer(offerOptions);
-        console.log("offer", offer);
+        offer.sdp = offer.sdp.replace('SAVPF 111', 'SAVPF 10 111');
+        offer.sdp = offer.sdp.replace('a=rtpmap:111 opus/48000/2', 'a=rtpmap:10 L16/16000\na=rtpmap:111 opus/48000/2');
+        console.log("offer SDP", offer.sdp);
+
         await  rtcConnection.setLocalDescription(offer);
         await  rtcLoopbackConnection.setRemoteDescription(offer);
+
         answer = await  rtcLoopbackConnection.createAnswer();
-        console.log("answer", offer);
+        answer.sdp = answer.sdp.replace('SAVPF 111', 'SAVPF 10 111');
+        answer.sdp = answer.sdp.replace('a=rtpmap:111 opus/48000/2', 'a=rtpmap:10 L16/16000\na=rtpmap:111 opus/48000/2');
+        console.log("answer SDP", answer.sdp);
+
         await  rtcLoopbackConnection.setLocalDescription(answer);
         await  rtcConnection.setRemoteDescription(answer);
+
         //end rtcloopbackhack.js
         this.rtcConnectionA = rtcConnection;
         this.rtcConnectionB = rtcLoopbackConnection;
